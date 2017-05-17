@@ -16,7 +16,8 @@ class Restaurant {
     Restaurant(string, vector<Table>);
     void take_table(int);
     void return_table(int);
-    void make_order(int, const string&, double = 10);
+    void make_order(int, const string&, bool, double = 10);
+    void cancel_order(int, const string&);
     string process();
     void get_tables();
     void stats();

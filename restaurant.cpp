@@ -22,10 +22,13 @@ void Restaurant::take_table(int intTable) {
 }
 
 void Restaurant::return_table(int intTable) {
-  if ((intTable-1) >= int(this->tables.size())||intTable<1)
+  if ((intTable-1) >= int(this->tables.size())||intTable<1) {
     throw runtime_error("Table " + to_string(intTable) + " doesn't exist!");
-  else
+  } else if (this->om.find(intTable) != this->om.end()) {
+    throw runtime_error("Table " + to_string(intTable) + " has open orders!");
+  } else {
     this->tables.at(intTable-1).giveback();
+  }
 }
 
 void Restaurant::get_tables() {
@@ -37,7 +40,7 @@ void Restaurant::get_tables() {
   cout << '\n';
 }
 
-void Restaurant::make_order(int intTable, const string& strOrder, double dblPrice) {
+void Restaurant::make_order(int intTable, const string& strOrder, bool fast, double dblPrice) {
   if ((intTable-1) >= int(this->tables.size())||intTable<1)
     throw runtime_error("Table " + to_string(intTable) + " doesn't exist!");
   if (this->tables.at(intTable-1).is_free())
@@ -45,7 +48,30 @@ void Restaurant::make_order(int intTable, const string& strOrder, double dblPric
   if (this->om.find(intTable) == this->om.end()) {
     this->om.insert({intTable, vector<Order>({Order(strOrder, dblPrice)})});
   } else {
-    this->om[intTable].push_back(Order(strOrder, dblPrice));
+    if (!fast)
+        this->om[intTable].push_back(Order(strOrder, dblPrice));
+    else
+        this->om[intTable].insert(this->om[intTable].begin(), Order(strOrder, dblPrice));
+  }
+}
+
+void Restaurant::cancel_order(int intTable, const string& strOrder) {
+  if ((intTable-1) >= int(this->tables.size())||intTable<1)
+    throw runtime_error("Table " + to_string(intTable) + " doesn't exist!");
+  if (this->tables.at(intTable-1).is_free())
+    throw runtime_error("Table " + to_string(intTable) + " has no customers!");
+  if (this->om.find(intTable) != this->om.end()) {
+    auto it = this->om[intTable].begin();
+    while (it->get_name() != strOrder) {
+        if (++it == this->om[intTable].end())
+            throw runtime_error("The order doesnt't exist!");
+    }
+    this->om[intTable].erase(it);
+    if (this->om[intTable].empty()) {
+      this->om.erase(intTable);
+    }
+  } else {
+    throw runtime_error("Table " + to_string(intTable) + " has no orders!");
   }
 }
 
@@ -53,7 +79,7 @@ string Restaurant::process() {
   if (this->om.empty())
     throw runtime_error("No orders!");
   string strProcess;
-  unordered_map<int, vector<Order>>::iterator it = this->om.begin();
+  auto it = this->om.begin();
   strProcess.append("Prepare ");
   while (it != this->om.end()) {
     for (size_t i {0}; i < it->second.size(); i++) {
@@ -156,7 +182,7 @@ string Restaurant::operator[](const int& intTable) {
 
    string helper {};
    double sum = 0;
-   unordered_map<int, vector<Order>>::iterator it = this->om.find(intTable);
+   auto it = this->om.find(intTable);
    if (it != this->om.end()) {
      for (size_t i {0}; i < it->second.size(); i++) {
        helper.append(it->second.at(i).get_name() + ": " + to_string(it->second.at(i).get_price()) + '\n');

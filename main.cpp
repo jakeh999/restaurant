@@ -25,7 +25,7 @@ int main() {
   string input; vector<string> s;
   //Enter name of restaurant and number of starting tables.
   Restaurant r{"Jake's Restaurant", vector<Table>(5)};
-  cout << "Restaurant System - by Jake Henderson\n\n";
+  cout << "Restaurant System - by Jake Henderson\n";
   while (cont) {
       cout << "> ";
       try {
@@ -39,16 +39,32 @@ int main() {
         } else if (s.at(0) == "giveback") {
           r.return_table(stoi(s.at(1)));
           r.get_tables();
-        } else if (s.at(0) == "order") {
-          switch(int(s.size())) {
-            case 3:
-              r.make_order(stoi(s.at(1)), s.at(2));
-              break;
-            case 4:
-              r.make_order(stoi(s.at(1)), s.at(2), stod(s.at(3)));
-              break;
-            default:
-              throw runtime_error("Improper use of order command. See >help.");
+        } else if (s.at(0) == "order" || s.at(0) == "order_fast") {
+          bool fast = false;
+          if (s.at(0) == "order_fast")
+            fast = true;
+          if (int(s.size())==3) {
+            r.make_order(stoi(s.at(1)), s.at(2), fast);
+          } else if (int(s.size())>3) {
+            string order {};
+            size_t i {2}; bool first = true;
+            while (i < (s.size()-1)) {
+                if (!first) {
+                    order.append(" ");
+                }
+                order.append(s.at(i));
+                i++;
+                first = false;
+            }
+            if (s.at(i).at(0) == '-') {
+                double price = stod(s.at(i).substr(1));
+                r.make_order(stoi(s.at(1)), order, fast, price);
+            } else {
+                order.append(" " + s.at(i));
+                r.make_order(stoi(s.at(1)), order, fast);
+            }
+          } else {
+            throw runtime_error("Improper use of order command. See >help.");
           }
         } else if (s.at(0) == "process") {
           cout << r.process() << '\n';
@@ -70,13 +86,31 @@ int main() {
           }
         } else if (s.at(0) == "stats") {
             r.stats();
+        } else if (s.at(0) == "cancel_order") {
+            if (int(s.size())>=3) {
+                string order {};
+                bool first = true;
+                for (size_t i {2}; i < s.size(); i++) {
+                    if (!first) {
+                        order.append(" ");
+                    } else {
+                        first = false;
+                    }
+                    order.append(s.at(i));
+                }
+                r.cancel_order(stoi(s.at(1)), order);
+            } else {
+                throw runtime_error("Improper use of cancel_order command. See >help.");
+            }
         } else if (s.at(0) == "help") {
           cout << "Available commads:\n"
                << "available_tables - show available tables\n"
                << "take [table number] - take a table\n"
                << "giveback [table number] - return a table\n"
-               << "order [table number] [menu item] [price - optional] - place an order at a table\n"
-               << "stats - display current stats\n"
+               << "order [table number] [menu item] -[price - optional] - place a standard order at a table\n"
+               << "order_fast [table number] [menu item] -[price - optional] - place an expidited order at a table\n"
+               << "cancel_order [table number] [menu item] - cancel an order at a table\n"
+               << "stats - display current statistics\n"
                << "process - prepare and deliver orders\n"
                << "restaurant - display current restaurant status\n"
                << "add_table [# of tables to add - optional] - add tables to the list\n"
