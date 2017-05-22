@@ -1,2 +1,2 @@
 # restaurant
-A simple command-line based restaurant system written in C++
+A simple restaurant management system written in C++
